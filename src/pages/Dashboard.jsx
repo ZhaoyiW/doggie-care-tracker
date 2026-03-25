@@ -42,6 +42,8 @@ export default function Dashboard() {
   const bathLogs = useStore(s => s.bathLogs || [])
 
   const [modal, setModal] = useState(null)
+  const [importing, setImporting] = useState(false)
+  const BASE = import.meta.env.VITE_API_URL ?? ''
 
   const todayStr = today()
 
@@ -219,7 +221,7 @@ export default function Dashboard() {
       {/* Export / Import */}
       <div className="card" style={{ display: 'flex', gap: 10 }}>
         <button className="btn btn-secondary" style={{ flex: 1 }} onClick={async () => {
-          const data = await fetch('/api/all').then(r => r.json())
+          const data = await fetch(`${BASE}/api/all`).then(r => r.json())
           const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
           const a = document.createElement('a')
           a.href = URL.createObjectURL(blob)
@@ -227,24 +229,31 @@ export default function Dashboard() {
           a.click()
         }}>📤 导出数据</button>
         <label className="btn btn-secondary" style={{ flex: 1, textAlign: 'center', cursor: 'pointer' }}>
-          📥 导入数据
+          {importing ? '导入中...' : '📥 导入数据'}
           <input type="file" accept=".json" style={{ display: 'none' }} onChange={async e => {
             const file = e.target.files?.[0]
             if (!file) return
-            const data = JSON.parse(await file.text())
-            const map = {
-              foodLogs: 'food-logs', poopLogs: 'poop-logs', symptomLogs: 'symptom-logs',
-              vaccineRecords: 'vaccine-records', vetVisits: 'vet-visits', healthTests: 'health-tests',
-              dewormingRecords: 'deworming-records', bathLogs: 'bath-logs',
-            }
-            if (data.dogProfile) await fetch('/api/profile', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data.dogProfile) })
-            for (const [key, path] of Object.entries(map)) {
-              for (const record of (data[key] || [])) {
-                await fetch(`/api/${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(record) })
+            setImporting(true)
+            try {
+              const data = JSON.parse(await file.text())
+              const map = {
+                foodLogs: 'food-logs', poopLogs: 'poop-logs', symptomLogs: 'symptom-logs',
+                vaccineRecords: 'vaccine-records', vetVisits: 'vet-visits', healthTests: 'health-tests',
+                dewormingRecords: 'deworming-records', bathLogs: 'bath-logs',
               }
+              if (data.dogProfile) await fetch(`${BASE}/api/profile`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data.dogProfile) })
+              for (const [key, path] of Object.entries(map)) {
+                for (const record of (data[key] || [])) {
+                  await fetch(`${BASE}/api/${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(record) })
+                }
+              }
+              alert('✅ 导入完成！')
+              window.location.reload()
+            } catch (err) {
+              alert('❌ 导入失败：' + err.message)
+            } finally {
+              setImporting(false)
             }
-            alert('导入完成，正在刷新...')
-            window.location.reload()
           }} />
         </label>
       </div>
