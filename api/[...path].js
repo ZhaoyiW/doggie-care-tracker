@@ -69,7 +69,7 @@ const TABLES = {
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return send(res, 200, {})
   try {
-    await ensureSchema()
+    await ensureSchema().catch(e => { throw new Error('DB error: ' + e.message + ' | URL starts with: ' + (process.env.DATABASE_URL || 'MISSING').slice(0, 40)) })
     const pathname = (req.url || '').split('?')[0]
     const parts = pathname.replace(/^\/api\//, '').split('/')
     const [resource, id] = parts
