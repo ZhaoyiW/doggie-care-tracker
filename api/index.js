@@ -51,6 +51,13 @@ app.use(cors())
 app.use(express.json({ limit: '10mb' }))
 app.use(async (_, __, next) => { await ensureSchema(); next() })
 
+app.get('/api/debug', (req, res) => {
+  res.json({
+    hasDbUrl: !!process.env.DATABASE_URL,
+    dbUrlPreview: process.env.DATABASE_URL ? process.env.DATABASE_URL.slice(0, 30) + '...' : 'NOT SET',
+  })
+})
+
 app.get('/api/all', async (_, res) => {
   try {
     const [profiles, foodLogs, poopLogs, symptomLogs, vaccineRecords, vetVisits, healthTests, dewormingRecords, bathLogs] = await Promise.all([
