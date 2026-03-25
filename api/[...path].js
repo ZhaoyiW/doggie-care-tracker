@@ -1,5 +1,3 @@
-import express from 'express'
-import cors from 'cors'
 import pg from 'pg'
 
 const pool = new pg.Pool({
@@ -7,7 +5,6 @@ const pool = new pg.Pool({
   ssl: { rejectUnauthorized: false },
 })
 
-// Create tables on first request
 let ready = false
 async function ensureSchema() {
   if (ready) return
@@ -46,63 +43,61 @@ async function del(table, id) {
   await pool.query(`DELETE FROM ${table} WHERE id = $1`, [id])
 }
 
-const app = express()
-app.use(cors())
-app.use(express.json({ limit: '10mb' }))
-app.use(async (_, __, next) => { await ensureSchema(); next() })
+function send(res, status, data) {
+  res.setHeader('Content-Type', 'application/json')
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  res.statusCode = status
+  res.end(JSON.stringify(data))
+}
 
-app.get('/api/debug', (req, res) => {
-  res.json({
-    hasDbUrl: !!process.env.DATABASE_URL,
-    dbUrlPreview: process.env.DATABASE_URL ? process.env.DATABASE_URL.slice(0, 30) + '...' : 'NOT SET',
-  })
-})
-
-app.get('/api/all', async (_, res) => {
-  try {
-    const [profiles, foodLogs, poopLogs, symptomLogs, vaccineRecords, vetVisits, healthTests, dewormingRecords, bathLogs] = await Promise.all([
-      all('dog_profile'), all('food_logs'), all('poop_logs'), all('symptom_logs'),
-      all('vaccine_records'), all('vet_visits'), all('health_tests'), all('deworming_records'), all('bath_logs'),
-    ])
-    res.json({ dogProfile: profiles[0] ?? null, foodLogs, poopLogs, symptomLogs, vaccineRecords, vetVisits, healthTests, dewormingRecords, bathLogs })
-  } catch (e) { res.status(500).json({ error: e.message }) }
-})
-
-app.put('/api/profile', async (req, res) => {
-  try { await upsert('dog_profile', req.body); res.json(req.body) }
-  catch (e) { res.status(500).json({ error: e.message }) }
-})
-
-function crud(path, table) {
-  app.get(`/api/${path}`, async (_, res) => {
-    try { res.json(await all(table)) }
-    catch (e) { res.status(500).json({ error: e.message }) }
-  })
-  app.post(`/api/${path}`, async (req, res) => {
-    try { await upsert(table, req.body); res.json(req.body) }
-    catch (e) { res.status(500).json({ error: e.message }) }
-  })
-  app.put(`/api/${path}/:id`, async (req, res) => {
-    try {
-      const result = await update(table, req.params.id, req.body)
-      result ? res.json(result) : res.status(404).json({ error: 'Not found' })
-    } catch (e) { res.status(500).json({ error: e.message }) }
-  })
-  app.delete(`/api/${path}/:id`, async (req, res) => {
-    try { await del(table, req.params.id); res.json({ ok: true }) }
-    catch (e) { res.status(500).json({ error: e.message }) }
+async function readBody(req) {
+  return new Promise((resolve) => {
+    let body = ''
+    req.on('data', chunk => { body += chunk })
+    req.on('end', () => resolve(body ? JSON.parse(body) : {}))
   })
 }
 
-crud('food-logs',         'food_logs')
-crud('poop-logs',         'poop_logs')
-crud('symptom-logs',      'symptom_logs')
-crud('vaccine-records',   'vaccine_records')
-crud('vet-visits',        'vet_visits')
-crud('health-tests',      'health_tests')
-crud('deworming-records', 'deworming_records')
-crud('bath-logs',         'bath_logs')
+const TABLES = {
+  'food-logs': 'food_logs', 'poop-logs': 'poop_logs', 'symptom-logs': 'symptom_logs',
+  'vaccine-records': 'vaccine_records', 'vet-visits': 'vet_visits', 'health-tests': 'health_tests',
+  'deworming-records': 'deworming_records', 'bath-logs': 'bath_logs',
+}
 
-export default function handler(req, res) {
-  return app(req, res)
+export default async function handler(req, res) {
+  if (req.method === 'OPTIONS') return send(res, 200, {})
+  try {
+    await ensureSchema()
+    const url = new URL(req.url, 'http://x')
+    const parts = url.pathname.replace(/^\/api\//, '').split('/')
+    const [resource, id] = parts
+    const table = TABLES[resource]
+    const body = ['POST', 'PUT'].includes(req.method) ? await readBody(req) : null
+
+    if (url.pathname === '/api/all') {
+      const [profiles, foodLogs, poopLogs, symptomLogs, vaccineRecords, vetVisits, healthTests, dewormingRecords, bathLogs] = await Promise.all([
+        all('dog_profile'), all('food_logs'), all('poop_logs'), all('symptom_logs'),
+        all('vaccine_records'), all('vet_visits'), all('health_tests'), all('deworming_records'), all('bath_logs'),
+      ])
+      return send(res, 200, { dogProfile: profiles[0] ?? null, foodLogs, poopLogs, symptomLogs, vaccineRecords, vetVisits, healthTests, dewormingRecords, bathLogs })
+    }
+
+    if (url.pathname === '/api/profile' && req.method === 'PUT') {
+      await upsert('dog_profile', body)
+      return send(res, 200, body)
+    }
+
+    if (!table) return send(res, 404, { error: 'Not found' })
+
+    if (req.method === 'GET')    return send(res, 200, await all(table))
+    if (req.method === 'POST')   { await upsert(table, body); return send(res, 200, body) }
+    if (req.method === 'PUT')    { const r = await update(table, id, body); return send(res, r ? 200 : 404, r ?? { error: 'Not found' }) }
+    if (req.method === 'DELETE') { await del(table, id); return send(res, 200, { ok: true }) }
+
+    send(res, 405, { error: 'Method not allowed' })
+  } catch (e) {
+    send(res, 500, { error: e.message })
+  }
 }
