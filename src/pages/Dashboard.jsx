@@ -241,10 +241,14 @@ export default function Dashboard() {
                 vaccineRecords: 'vaccine-records', vetVisits: 'vet-visits', healthTests: 'health-tests',
                 dewormingRecords: 'deworming-records', bathLogs: 'bath-logs',
               }
+              const check = await fetch(`${BASE}/api/all`)
+              if (!check.ok) throw new Error('无法连接数据库，请检查 Vercel 的 DATABASE_URL 设置')
+
               if (data.dogProfile) await fetch(`${BASE}/api/profile`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data.dogProfile) })
               for (const [key, path] of Object.entries(map)) {
                 for (const record of (data[key] || [])) {
-                  await fetch(`${BASE}/api/${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(record) })
+                  const r = await fetch(`${BASE}/api/${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(record) })
+                  if (!r.ok) throw new Error(`保存 ${key} 失败：${await r.text()}`)
                 }
               }
               alert('✅ 导入完成！')
