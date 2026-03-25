@@ -103,4 +103,6 @@ crud('health-tests',      'health_tests')
 crud('deworming-records', 'deworming_records')
 crud('bath-logs',         'bath_logs')
 
-export default app
+export default function handler(req, res) {
+  return app(req, res)
+}
