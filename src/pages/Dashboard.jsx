@@ -42,8 +42,6 @@ export default function Dashboard() {
   const bathLogs = useStore(s => s.bathLogs || [])
 
   const [modal, setModal] = useState(null)
-  const [importing, setImporting] = useState(false)
-  const BASE = import.meta.env.VITE_API_URL ?? ''
 
   const todayStr = today()
 
@@ -217,50 +215,6 @@ export default function Dashboard() {
           )}
         </div>
       )}
-
-      {/* Export / Import */}
-      <div className="card" style={{ display: 'flex', gap: 10 }}>
-        <button className="btn btn-secondary" style={{ flex: 1 }} onClick={async () => {
-          const data = await fetch(`${BASE}/api/all`).then(r => r.json())
-          const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-          const a = document.createElement('a')
-          a.href = URL.createObjectURL(blob)
-          a.download = `doggie-care-${today()}.json`
-          a.click()
-        }}>📤 导出数据</button>
-        <label className="btn btn-secondary" style={{ flex: 1, textAlign: 'center', cursor: 'pointer' }}>
-          {importing ? '导入中...' : '📥 导入数据'}
-          <input type="file" accept=".json" style={{ display: 'none' }} onChange={async e => {
-            const file = e.target.files?.[0]
-            if (!file) return
-            setImporting(true)
-            try {
-              const data = JSON.parse(await file.text())
-              const map = {
-                foodLogs: 'food-logs', poopLogs: 'poop-logs', symptomLogs: 'symptom-logs',
-                vaccineRecords: 'vaccine-records', vetVisits: 'vet-visits', healthTests: 'health-tests',
-                dewormingRecords: 'deworming-records', bathLogs: 'bath-logs',
-              }
-              const check = await fetch(`${BASE}/api/all`)
-              if (!check.ok) throw new Error('无法连接数据库，请检查 Vercel 的 DATABASE_URL 设置')
-
-              if (data.dogProfile) await fetch(`${BASE}/api/profile`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data.dogProfile) })
-              for (const [key, path] of Object.entries(map)) {
-                for (const record of (data[key] || [])) {
-                  const r = await fetch(`${BASE}/api/${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(record) })
-                  if (!r.ok) throw new Error(`保存 ${key} 失败：${await r.text()}`)
-                }
-              }
-              alert('✅ 导入完成！')
-              window.location.reload()
-            } catch (err) {
-              alert('❌ 导入失败：' + err.message)
-            } finally {
-              setImporting(false)
-            }
-          }} />
-        </label>
-      </div>
 
       {/* Modals */}
       <Modal open={modal === 'profile'} onClose={() => setModal(null)} title="🐶 编辑狗狗信息">
