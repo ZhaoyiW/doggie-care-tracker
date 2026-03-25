@@ -70,13 +70,13 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return send(res, 200, {})
   try {
     await ensureSchema()
-    const url = new URL(req.url, 'http://x')
-    const parts = url.pathname.replace(/^\/api\//, '').split('/')
+    const pathname = (req.url || '').split('?')[0]
+    const parts = pathname.replace(/^\/api\//, '').split('/')
     const [resource, id] = parts
     const table = TABLES[resource]
     const body = ['POST', 'PUT'].includes(req.method) ? await readBody(req) : null
 
-    if (url.pathname === '/api/all') {
+    if (pathname === '/api/all' || resource === 'all') {
       const [profiles, foodLogs, poopLogs, symptomLogs, vaccineRecords, vetVisits, healthTests, dewormingRecords, bathLogs] = await Promise.all([
         all('dog_profile'), all('food_logs'), all('poop_logs'), all('symptom_logs'),
         all('vaccine_records'), all('vet_visits'), all('health_tests'), all('deworming_records'), all('bath_logs'),
@@ -84,7 +84,7 @@ export default async function handler(req, res) {
       return send(res, 200, { dogProfile: profiles[0] ?? null, foodLogs, poopLogs, symptomLogs, vaccineRecords, vetVisits, healthTests, dewormingRecords, bathLogs })
     }
 
-    if (url.pathname === '/api/profile' && req.method === 'PUT') {
+    if ((pathname === '/api/profile' || resource === 'profile') && req.method === 'PUT') {
       await upsert('dog_profile', body)
       return send(res, 200, body)
     }
