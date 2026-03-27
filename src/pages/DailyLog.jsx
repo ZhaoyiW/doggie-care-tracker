@@ -180,7 +180,7 @@ export default function DailyLog() {
       <h1 style={{ margin: '0 0 16px', fontSize: 22, fontWeight: 700 }}>📝 每日记录</h1>
 
       {/* Date nav */}
-      <div className="date-nav" style={{ marginBottom: 16 }}>
+      <div className="date-nav" style={{ marginBottom: 4 }}>
         <button className="btn btn-icon" onClick={() => changeDay(-1)}>←</button>
         <input
           type="date"
@@ -189,6 +189,9 @@ export default function DailyLog() {
           style={{ border: 'none', background: 'none', fontSize: 16, fontWeight: 600, fontFamily: 'inherit', color: 'var(--text)', textAlign: 'center' }}
         />
         <button className="btn btn-icon" onClick={() => changeDay(1)}>→</button>
+      </div>
+      <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--muted)', marginBottom: 16 }}>
+        {new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' })}
       </div>
 
       {/* Tabs */}

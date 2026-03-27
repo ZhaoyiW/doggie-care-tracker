@@ -63,6 +63,12 @@ export default function Dashboard() {
     )[0],
     [poopLogs])
 
+  const hoursSinceLastPoop = useMemo(() => {
+    if (!lastPoop) return null
+    const last = new Date(`${lastPoop.date}T${lastPoop.time}:00`)
+    return (Date.now() - last.getTime()) / 3600000
+  }, [lastPoop])
+
   const last30DaysLoose = useMemo(() => {
     const cutoff = new Date()
     cutoff.setDate(cutoff.getDate() - 30)
@@ -164,7 +170,7 @@ export default function Dashboard() {
           <p className="card-title">💩 最近排便</p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: 28 }}>{POOP_STATUS_MAP[lastPoop.status]?.emoji || '💩'}</span>
-            <div>
+            <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 600 }}>{POOP_STATUS_MAP[lastPoop.status]?.label}</div>
               <div style={{ fontSize: 12, color: 'var(--muted)' }}>
                 {formatDate(lastPoop.date)} {lastPoop.time}
@@ -172,6 +178,19 @@ export default function Dashboard() {
                 {lastPoop.hasBlood && ' · 有血'}
               </div>
             </div>
+            {hoursSinceLastPoop !== null && (
+              <div style={{
+                textAlign: 'center',
+                padding: '4px 10px',
+                borderRadius: 8,
+                background: hoursSinceLastPoop >= 15 ? '#F5E8E8' : 'var(--bg)',
+                color: hoursSinceLastPoop >= 15 ? 'var(--red)' : 'var(--muted)',
+                fontWeight: hoursSinceLastPoop >= 15 ? 700 : 400,
+              }}>
+                <div style={{ fontSize: 15 }}>{Math.floor(hoursSinceLastPoop)}h</div>
+                <div style={{ fontSize: 11 }}>{hoursSinceLastPoop >= 15 ? '⚠️ 注意' : '距今'}</div>
+              </div>
+            )}
           </div>
           <div style={{ marginTop: 10, fontSize: 13, color: 'var(--muted)' }}>
             近30天拉稀 <strong style={{ color: last30DaysLoose > 3 ? 'var(--red)' : 'var(--text)' }}>{last30DaysLoose}</strong> 次
