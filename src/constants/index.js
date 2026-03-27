@@ -1,14 +1,14 @@
-// Half-hour time slots
-export const TIME_SLOTS = Array.from({ length: 48 }, (_, i) => {
-  const h = Math.floor(i / 2)
-  const m = i % 2 === 0 ? '00' : '30'
+// 15-minute time slots
+export const TIME_SLOTS = Array.from({ length: 96 }, (_, i) => {
+  const h = Math.floor(i / 4)
+  const m = String((i % 4) * 15).padStart(2, '0')
   return `${String(h).padStart(2, '0')}:${m}`
 })
 
-// Get current time rounded down to nearest half hour
+// Get current time rounded down to nearest 15 minutes
 export function getCurrentHalfHour() {
   const now = new Date()
-  const m = now.getMinutes() >= 30 ? '30' : '00'
+  const m = String(Math.floor(now.getMinutes() / 15) * 15).padStart(2, '0')
   return `${String(now.getHours()).padStart(2, '0')}:${m}`
 }
 
