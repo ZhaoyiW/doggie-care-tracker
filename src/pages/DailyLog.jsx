@@ -6,6 +6,7 @@ import PoopLogForm from '../components/forms/PoopLogForm'
 import SymptomLogForm from '../components/forms/SymptomLogForm'
 import BathLogForm from '../components/forms/BathLogForm'
 import { today } from '../utils/dateUtils'
+import DatePicker from '../components/DatePicker'
 import { POOP_STATUS_MAP, FOOD_TYPES } from '../constants'
 
 const FOOD_TYPE_MAP = Object.fromEntries([
@@ -180,18 +181,10 @@ export default function DailyLog() {
       <h1 style={{ margin: '0 0 16px', fontSize: 22, fontWeight: 700 }}>📝 每日记录</h1>
 
       {/* Date nav */}
-      <div className="date-nav" style={{ marginBottom: 4 }}>
+      <div className="date-nav" style={{ marginBottom: 16 }}>
         <button className="btn btn-icon" onClick={() => changeDay(-1)}>←</button>
-        <input
-          type="date"
-          value={date}
-          onChange={e => setDate(e.target.value)}
-          style={{ border: 'none', background: 'none', fontSize: 16, fontWeight: 600, fontFamily: 'inherit', color: 'var(--text)', textAlign: 'center' }}
-        />
+        <DatePicker value={date} onChange={setDate} />
         <button className="btn btn-icon" onClick={() => changeDay(1)}>→</button>
-      </div>
-      <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--muted)', marginBottom: 16 }}>
-        {new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' })}
       </div>
 
       {/* Tabs */}
