@@ -76,9 +76,14 @@ export default function Dashboard() {
     return poopLogs.filter(p => p.date >= cutoffStr && p.status === 'LOOSE').length
   }, [poopLogs])
 
-  const lastVetVisit = useMemo(() =>
-    [...vetVisits].sort((a, b) => b.date.localeCompare(a.date))[0],
-    [vetVisits])
+  const lastVetVisit = useMemo(() => {
+    const cutoff = new Date()
+    cutoff.setDate(cutoff.getDate() - 60)
+    const cutoffStr = cutoff.toISOString().slice(0, 10)
+    return [...vetVisits]
+      .filter(v => v.date >= cutoffStr)
+      .sort((a, b) => b.date.localeCompare(a.date))[0]
+  }, [vetVisits])
 
   const lastBath = useMemo(() =>
     [...bathLogs].sort((a, b) => b.date.localeCompare(a.date))[0],
