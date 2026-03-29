@@ -216,7 +216,16 @@ export default function Dashboard() {
               padding: '10px 0', borderBottom: '1px solid var(--border)',
             }}>
               <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600 }}>{apt.reason || '预约'}</div>
+                <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {apt.reason || '预约'}
+                  <span style={{
+                    fontSize: 11, fontWeight: 700, padding: '1px 6px', borderRadius: 5,
+                    background: apt.days === 0 ? '#F5EEE3' : '#EEF1F5',
+                    color: apt.days === 0 ? 'var(--orange)' : 'var(--accent)',
+                  }}>
+                    {apt.days === 0 ? '今天' : `${apt.days}天后`}
+                  </span>
+                </div>
                 <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
                   {formatDate(apt.date)} {apt.time}
                   {apt.vet && ` · ${apt.vet.name}`}
@@ -243,13 +252,6 @@ export default function Dashboard() {
                   </div>
                 )}
               </div>
-              <span style={{
-                fontSize: 12, fontWeight: 700, padding: '2px 8px', borderRadius: 6, flexShrink: 0,
-                background: apt.days === 0 ? '#F5EEE3' : '#EEF1F5',
-                color: apt.days === 0 ? 'var(--orange)' : 'var(--accent)',
-              }}>
-                {apt.days === 0 ? '今天' : `${apt.days}天后`}
-              </span>
             </div>
           ))}
         </div>
@@ -325,14 +327,12 @@ export default function Dashboard() {
             {formatDate(lastBath.date)}
             <span style={{ marginLeft: 8, fontSize: 13, color: 'var(--muted)' }}>
               · {daysBetween(lastBath.date, todayStr) === 0 ? '今天' : `${daysBetween(lastBath.date, todayStr)} 天前`}
+              {' · '}{lastBath.location === 'OUTSIDE' ? `🏪 ${lastBath.shopName || '在外'}` : '🏠 在家'}
             </span>
           </div>
-          <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>
-            {lastBath.location === 'OUTSIDE'
-              ? `🏪 ${lastBath.shopName || '在外'}`
-              : '🏠 在家'}
-            {lastBath.notes && ` · ${lastBath.notes}`}
-          </div>
+          {lastBath.notes && (
+            <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>{lastBath.notes}</div>
+          )}
         </div>
       )}
 
