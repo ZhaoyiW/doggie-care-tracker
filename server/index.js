@@ -26,6 +26,8 @@ if (IS_CLOUD) {
     CREATE TABLE IF NOT EXISTS health_tests     (id TEXT PRIMARY KEY, data JSONB NOT NULL);
     CREATE TABLE IF NOT EXISTS deworming_records(id TEXT PRIMARY KEY, data JSONB NOT NULL);
     CREATE TABLE IF NOT EXISTS bath_logs        (id TEXT PRIMARY KEY, data JSONB NOT NULL);
+    CREATE TABLE IF NOT EXISTS vets             (id TEXT PRIMARY KEY, data JSONB NOT NULL);
+    CREATE TABLE IF NOT EXISTS appointments     (id TEXT PRIMARY KEY, data JSONB NOT NULL);
   `)
   console.log('✅ 已连接 PostgreSQL')
 } else {
@@ -41,6 +43,8 @@ if (IS_CLOUD) {
     CREATE TABLE IF NOT EXISTS health_tests     (id TEXT PRIMARY KEY, data TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS deworming_records(id TEXT PRIMARY KEY, data TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS bath_logs        (id TEXT PRIMARY KEY, data TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS vets             (id TEXT PRIMARY KEY, data TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS appointments     (id TEXT PRIMARY KEY, data TEXT NOT NULL);
   `)
   console.log('✅ 已连接本地 SQLite')
 }
@@ -96,11 +100,12 @@ app.use(express.json({ limit: '10mb' }))
 // GET /api/all
 app.get('/api/all', async (_, res) => {
   try {
-    const [profiles, foodLogs, poopLogs, symptomLogs, vaccineRecords, vetVisits, healthTests, dewormingRecords, bathLogs] = await Promise.all([
+    const [profiles, foodLogs, poopLogs, symptomLogs, vaccineRecords, vetVisits, healthTests, dewormingRecords, bathLogs, vets, appointments] = await Promise.all([
       all('dog_profile'), all('food_logs'), all('poop_logs'), all('symptom_logs'),
       all('vaccine_records'), all('vet_visits'), all('health_tests'), all('deworming_records'), all('bath_logs'),
+      all('vets'), all('appointments'),
     ])
-    res.json({ dogProfile: profiles[0] ?? null, foodLogs, poopLogs, symptomLogs, vaccineRecords, vetVisits, healthTests, dewormingRecords, bathLogs })
+    res.json({ dogProfile: profiles[0] ?? null, foodLogs, poopLogs, symptomLogs, vaccineRecords, vetVisits, healthTests, dewormingRecords, bathLogs, vets, appointments })
   } catch (e) {
     res.status(500).json({ error: e.message })
   }
@@ -148,6 +153,8 @@ crudRoutes(router, 'vet-visits',        'vet_visits')
 crudRoutes(router, 'health-tests',      'health_tests')
 crudRoutes(router, 'deworming-records', 'deworming_records')
 crudRoutes(router, 'bath-logs',         'bath_logs')
+crudRoutes(router, 'vets',              'vets')
+crudRoutes(router, 'appointments',      'appointments')
 app.use('/api', router)
 
 const PORT = process.env.PORT || 3001

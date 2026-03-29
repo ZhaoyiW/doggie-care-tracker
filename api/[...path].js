@@ -18,6 +18,8 @@ async function ensureSchema() {
     CREATE TABLE IF NOT EXISTS health_tests     (id TEXT PRIMARY KEY, data JSONB NOT NULL);
     CREATE TABLE IF NOT EXISTS deworming_records(id TEXT PRIMARY KEY, data JSONB NOT NULL);
     CREATE TABLE IF NOT EXISTS bath_logs        (id TEXT PRIMARY KEY, data JSONB NOT NULL);
+    CREATE TABLE IF NOT EXISTS vets             (id TEXT PRIMARY KEY, data JSONB NOT NULL);
+    CREATE TABLE IF NOT EXISTS appointments     (id TEXT PRIMARY KEY, data JSONB NOT NULL);
   `)
   ready = true
 }
@@ -64,6 +66,7 @@ const TABLES = {
   'food-logs': 'food_logs', 'poop-logs': 'poop_logs', 'symptom-logs': 'symptom_logs',
   'vaccine-records': 'vaccine_records', 'vet-visits': 'vet_visits', 'health-tests': 'health_tests',
   'deworming-records': 'deworming_records', 'bath-logs': 'bath_logs',
+  'vets': 'vets', 'appointments': 'appointments',
 }
 
 export default async function handler(req, res) {
@@ -77,11 +80,12 @@ export default async function handler(req, res) {
     const body = ['POST', 'PUT'].includes(req.method) ? await readBody(req) : null
 
     if (pathname === '/api/all' || resource === 'all') {
-      const [profiles, foodLogs, poopLogs, symptomLogs, vaccineRecords, vetVisits, healthTests, dewormingRecords, bathLogs] = await Promise.all([
+      const [profiles, foodLogs, poopLogs, symptomLogs, vaccineRecords, vetVisits, healthTests, dewormingRecords, bathLogs, vets, appointments] = await Promise.all([
         all('dog_profile'), all('food_logs'), all('poop_logs'), all('symptom_logs'),
         all('vaccine_records'), all('vet_visits'), all('health_tests'), all('deworming_records'), all('bath_logs'),
+        all('vets'), all('appointments'),
       ])
-      return send(res, 200, { dogProfile: profiles[0] ?? null, foodLogs, poopLogs, symptomLogs, vaccineRecords, vetVisits, healthTests, dewormingRecords, bathLogs })
+      return send(res, 200, { dogProfile: profiles[0] ?? null, foodLogs, poopLogs, symptomLogs, vaccineRecords, vetVisits, healthTests, dewormingRecords, bathLogs, vets, appointments })
     }
 
     if ((pathname === '/api/profile' || resource === 'profile') && req.method === 'PUT') {
