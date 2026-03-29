@@ -12,6 +12,7 @@ export default function CalendarPage() {
   const poopLogs = useStore(s => s.poopLogs || [])
   const bathLogs = useStore(s => s.bathLogs || [])
   const dewormingRecords = useStore(s => s.dewormingRecords || [])
+  const appointments = useStore(s => s.appointments || [])
   const [currentMonth, setCurrentMonth] = useState(new Date())
 
   const days = useMemo(() => getDaysInMonth(currentMonth), [currentMonth])
@@ -21,6 +22,7 @@ export default function CalendarPage() {
     const map = {}
     const bathDates = new Set(bathLogs.map(b => b.date))
     const dewormDates = new Set(dewormingRecords.map(r => r.date))
+    const appointmentDates = new Set(appointments.map(a => a.date))
     days.forEach(day => {
       const dateStr = dateToDayStr(day)
       const events = getPoopEventsForDate(poopLogs, dateStr)
@@ -28,10 +30,11 @@ export default function CalendarPage() {
         poop: computePoopLabel(events),
         hasBath: bathDates.has(dateStr),
         hasDeworming: dewormDates.has(dateStr),
+        hasAppointment: appointmentDates.has(dateStr),
       }
     })
     return map
-  }, [days, poopLogs, bathLogs, dewormingRecords])
+  }, [days, poopLogs, bathLogs, dewormingRecords, appointments])
 
   return (
     <div className="page-content">
@@ -59,7 +62,7 @@ export default function CalendarPage() {
 
         {days.map(day => {
           const dateStr = dateToDayStr(day)
-          const { poop, hasBath, hasDeworming } = labelMap[dateStr]
+          const { poop, hasBath, hasDeworming, hasAppointment } = labelMap[dateStr]
           const isToday = isDateToday(dateStr)
 
           return (
@@ -75,10 +78,11 @@ export default function CalendarPage() {
                   {poop.label}
                 </div>
               )}
-              {(hasBath || hasDeworming) && (
+              {(hasBath || hasDeworming || hasAppointment) && (
                 <div style={{ display: 'flex', gap: 2, justifyContent: 'center', marginTop: 2 }}>
                   {hasBath && <span style={{ fontSize: 14 }}>🛁</span>}
                   {hasDeworming && <span style={{ fontSize: 14 }}>💊</span>}
+                  {hasAppointment && <span style={{ fontSize: 14 }}>🏥</span>}
                 </div>
               )}
             </div>
@@ -103,6 +107,10 @@ export default function CalendarPage() {
           <div className="legend-item">
             <span style={{ fontSize: 12 }}>💊</span>
             <span style={{ color: 'var(--text)' }}>驱虫</span>
+          </div>
+          <div className="legend-item">
+            <span style={{ fontSize: 12 }}>🏥</span>
+            <span style={{ color: 'var(--text)' }}>预约</span>
           </div>
         </div>
       </div>

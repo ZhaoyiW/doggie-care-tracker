@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { today } from '../../utils/dateUtils'
 import Segmented from '../Segmented'
+import DatePicker from '../DatePicker'
 import useStore from '../../store'
 
 export default function VetVisitForm({ initial, onClose }) {
@@ -45,7 +46,7 @@ export default function VetVisitForm({ initial, onClose }) {
     <div>
       <div className="form-group">
         <label className="form-label">就诊日期</label>
-        <input type="date" className="form-input" value={form.date} onChange={e => set('date', e.target.value)} />
+        <DatePicker variant="input" value={form.date} onChange={v => set('date', v)} />
       </div>
 
       {fields.map(({ key, label, placeholder }) => (
@@ -67,7 +68,7 @@ export default function VetVisitForm({ initial, onClose }) {
       {form.needsFollowUp && (
         <div className="form-group">
           <label className="form-label">复诊日期</label>
-          <input type="date" className="form-input" value={form.followUpDate} onChange={e => set('followUpDate', e.target.value)} />
+          <DatePicker variant="input" value={form.followUpDate} onChange={v => set('followUpDate', v)} placeholder="选择复诊日期" />
         </div>
       )}
 

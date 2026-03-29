@@ -10,23 +10,52 @@ import { computePoopLabel, getPoopEventsForDate } from '../utils/poopLabelEngine
 import { POOP_STATUS_MAP, FOOD_TYPES } from '../constants'
 
 function ReminderCard({ title, items }) {
+  const [expanded, setExpanded] = useState(false)
   if (items.length === 0) return null
+
+  // urgency based on the most urgent item
+  const minDays = Math.min(...items.map(i => i.days))
+  const urgency = minDays < 0 ? 'overdue' : minDays <= 30 ? 'soon' : 'ok'
+  const cardBg = urgency === 'overdue' ? '#F5E8E8' : urgency === 'soon' ? '#F5EEE3' : '#EAF0EA'
+  const cardColor = urgency === 'overdue' ? 'var(--red)' : urgency === 'soon' ? 'var(--orange)' : 'var(--green)'
+  const icon = urgency === 'overdue' ? '🚨' : urgency === 'soon' ? '⚠️' : '✅'
+
+  const summary = minDays < 0
+    ? `${items.length} 个疫苗已过期`
+    : minDays === 0
+    ? `${items.length} 个疫苗今天到期`
+    : `${items.length} 个疫苗 ${minDays} 天后到期`
+
   return (
-    <div className="card">
-      <p className="card-title">{title}</p>
-      {items.map(item => {
-        const cls = item.days < 0 ? 'overdue' : item.days <= 30 ? 'soon' : 'ok'
-        const label = item.days < 0 ? `已过期 ${-item.days} 天` : item.days === 0 ? '今天到期' : `${item.days} 天后到期`
-        return (
-          <div key={item.id} className={`vaccine-alert ${cls}`}>
-            <span style={{ flex: 1 }}>
-              <strong>{item.name}</strong><br />
-              <span style={{ fontSize: 12, opacity: 0.8 }}>{formatDate(item.nextDueDate)} · {label}</span>
-            </span>
-            <span style={{ fontSize: 18 }}>{cls === 'overdue' ? '🚨' : cls === 'soon' ? '⚠️' : '✅'}</span>
+    <div className="card" style={{ background: cardBg, cursor: 'pointer' }} onClick={() => setExpanded(e => !e)}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 16 }}>{icon}</span>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: cardColor }}>{title.replace(/^..\s/, '')}</div>
+            <div style={{ fontSize: 12, color: cardColor, opacity: 0.85 }}>{summary}</div>
           </div>
-        )
-      })}
+        </div>
+        <span style={{ fontSize: 12, color: cardColor, opacity: 0.7 }}>{expanded ? '▲' : '▼'}</span>
+      </div>
+
+      {expanded && (
+        <div style={{ marginTop: 12 }} onClick={e => e.stopPropagation()}>
+          {items.map(item => {
+            const cls = item.days < 0 ? 'overdue' : item.days <= 30 ? 'soon' : 'ok'
+            const label = item.days < 0 ? `已过期 ${-item.days} 天` : item.days === 0 ? '今天到期' : `${item.days} 天后到期`
+            return (
+              <div key={item.id} className={`vaccine-alert ${cls}`}>
+                <span style={{ flex: 1 }}>
+                  <strong>{item.name}</strong><br />
+                  <span style={{ fontSize: 12, opacity: 0.8 }}>{formatDate(item.nextDueDate)} · {label}</span>
+                </span>
+                <span style={{ fontSize: 18 }}>{cls === 'overdue' ? '🚨' : cls === 'soon' ? '⚠️' : '✅'}</span>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
@@ -40,6 +69,8 @@ export default function Dashboard() {
   const dewormingRecords = useStore(s => s.dewormingRecords || [])
   const vetVisits = useStore(s => s.vetVisits)
   const bathLogs = useStore(s => s.bathLogs || [])
+  const appointments = useStore(s => s.appointments || [])
+  const vets = useStore(s => s.vets || [])
 
   const [modal, setModal] = useState(null)
 
@@ -104,6 +135,15 @@ export default function Dashboard() {
       .filter(r => r.days <= 5)
       .sort((a, b) => a.days - b.days),
     [dewormingRecords, todayStr])
+
+  const upcomingAppointments = useMemo(() => {
+    const vetMap = Object.fromEntries(vets.map(v => [v.id, v]))
+    return appointments
+      .filter(a => a.status === 'PENDING' && a.date >= todayStr)
+      .map(a => ({ ...a, vet: a.vetId ? vetMap[a.vetId] : null, days: daysBetween(todayStr, a.date) }))
+      .filter(a => a.days <= 30)
+      .sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time))
+  }, [appointments, vets, todayStr])
 
   return (
     <div className="page-content">
@@ -206,6 +246,47 @@ export default function Dashboard() {
       {/* Vaccine & deworming reminders */}
       <ReminderCard title="💉 疫苗提醒" items={vaccineReminders} />
       <ReminderCard title="💊 驱虫提醒" items={dewormingReminders} />
+
+      {/* Upcoming appointments */}
+      {upcomingAppointments.length > 0 && (
+        <div className="card">
+          <p className="card-title">📅 近期预约</p>
+          {upcomingAppointments.map(apt => (
+            <div key={apt.id} style={{
+              display: 'flex', alignItems: 'flex-start', gap: 10,
+              padding: '10px 0', borderBottom: '1px solid var(--border)',
+            }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600 }}>{apt.reason || '预约'}</div>
+                <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
+                  {formatDate(apt.date)} {apt.time}
+                  {apt.vet && ` · ${apt.vet.name}`}
+                </div>
+                {apt.vet?.address && (
+                  <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>📍 {apt.vet.address}</div>
+                )}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
+                <span style={{
+                  fontSize: 12, fontWeight: 700, padding: '2px 8px', borderRadius: 6,
+                  background: apt.days === 0 ? '#F5EEE3' : '#EEF1F5',
+                  color: apt.days === 0 ? 'var(--orange)' : 'var(--accent)',
+                }}>
+                  {apt.days === 0 ? '今天' : `${apt.days}天后`}
+                </span>
+                {apt.vet?.address && (
+                  <a
+                    href={`https://maps.apple.com/?address=${encodeURIComponent(apt.vet.address)}`}
+                    style={{ fontSize: 11, color: 'var(--accent)', textDecoration: 'none' }}
+                  >
+                    导航 →
+                  </a>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Last bath */}
       {lastBath && (

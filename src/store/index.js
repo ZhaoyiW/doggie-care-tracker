@@ -45,6 +45,8 @@ const useStore = create((set) => ({
         healthTests:      data.healthTests ?? [],
         dewormingRecords: data.dewormingRecords ?? [],
         bathLogs:         data.bathLogs ?? [],
+        vets:             data.vets ?? [],
+        appointments:     data.appointments ?? [],
       })
     }
     set({ loading: false })
@@ -201,6 +203,40 @@ const useStore = create((set) => ({
   deleteBathLog: (id) => {
     set(s => ({ bathLogs: s.bathLogs.filter(b => b.id !== id) }))
     api.del(`bath-logs/${id}`)
+  },
+
+  // ─── Vets (常用诊所) ────────────────────────────────────────────────────
+  vets: [],
+
+  addVet: (data) => {
+    const record = { id: uid(), ...data }
+    set(s => ({ vets: [record, ...s.vets] }))
+    api.post('vets', record)
+  },
+  updateVet: (id, data) => {
+    set(s => ({ vets: s.vets.map(v => v.id === id ? { ...v, ...data } : v) }))
+    api.put(`vets/${id}`, data)
+  },
+  deleteVet: (id) => {
+    set(s => ({ vets: s.vets.filter(v => v.id !== id) }))
+    api.del(`vets/${id}`)
+  },
+
+  // ─── Appointments (预约) ────────────────────────────────────────────────
+  appointments: [],
+
+  addAppointment: (data) => {
+    const record = { id: uid(), ...data }
+    set(s => ({ appointments: [record, ...s.appointments] }))
+    api.post('appointments', record)
+  },
+  updateAppointment: (id, data) => {
+    set(s => ({ appointments: s.appointments.map(a => a.id === id ? { ...a, ...data } : a) }))
+    api.put(`appointments/${id}`, data)
+  },
+  deleteAppointment: (id) => {
+    set(s => ({ appointments: s.appointments.filter(a => a.id !== id) }))
+    api.del(`appointments/${id}`)
   },
 }))
 

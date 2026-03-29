@@ -16,6 +16,8 @@ export default function DayDetail() {
   const foodLogs = useStore(s => s.foodLogs)
   const poopLogs = useStore(s => s.poopLogs || [])
   const symptomLogs = useStore(s => s.symptomLogs)
+  const appointments = useStore(s => s.appointments || [])
+  const vets = useStore(s => s.vets || [])
 
   const dayFoods = useMemo(() =>
     foodLogs.filter(f => f.date === date).sort((a, b) => a.time.localeCompare(b.time)),
@@ -29,6 +31,14 @@ export default function DayDetail() {
     symptomLogs.find(s => s.date === date), [symptomLogs, date])
 
   const poopLabel = useMemo(() => computePoopLabel(dayPoops), [dayPoops])
+
+  const dayAppointments = useMemo(() => {
+    const vetMap = Object.fromEntries(vets.map(v => [v.id, v]))
+    return appointments
+      .filter(a => a.date === date)
+      .map(a => ({ ...a, vet: a.vetId ? vetMap[a.vetId] : null }))
+      .sort((a, b) => a.time.localeCompare(b.time))
+  }, [appointments, vets, date])
 
   return (
     <div className="page-content">
@@ -109,7 +119,34 @@ export default function DayDetail() {
         </div>
       )}
 
-      {dayFoods.length === 0 && dayPoops.length === 0 && !daySymptom && (
+      {/* Appointments */}
+      {dayAppointments.length > 0 && (
+        <div className="card">
+          <p className="card-title">🏥 当天预约</p>
+          {dayAppointments.map(apt => (
+            <div key={apt.id} style={{ padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ fontWeight: 600 }}>{apt.reason || '预约'}</div>
+                <span style={{
+                  fontSize: 11, padding: '1px 6px', borderRadius: 4, fontWeight: 700,
+                  background: apt.status === 'DONE' ? '#EAF0EA' : '#EEF1F5',
+                  color: apt.status === 'DONE' ? 'var(--green)' : 'var(--accent)',
+                }}>
+                  {apt.status === 'DONE' ? '✅ 已完成' : '📅 待办'}
+                </span>
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
+                {apt.time}{apt.vet && ` · ${apt.vet.name}`}
+              </div>
+              {apt.vet?.address && (
+                <div style={{ fontSize: 12, color: 'var(--muted)' }}>📍 {apt.vet.address}</div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {dayFoods.length === 0 && dayPoops.length === 0 && !daySymptom && dayAppointments.length === 0 && (
         <div className="empty-state">
           <div className="empty-emoji">📭</div>
           <p>当天暂无记录</p>

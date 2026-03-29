@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { HEALTH_TEST_TYPES } from '../../constants'
 import { today } from '../../utils/dateUtils'
 import Segmented from '../Segmented'
+import DatePicker from '../DatePicker'
 import useStore from '../../store'
 
 export default function HealthTestForm({ initial, onClose }) {
@@ -31,7 +32,7 @@ export default function HealthTestForm({ initial, onClose }) {
     <div>
       <div className="form-group">
         <label className="form-label">检查日期</label>
-        <input type="date" className="form-input" value={form.date} onChange={e => set('date', e.target.value)} />
+        <DatePicker variant="input" value={form.date} onChange={v => set('date', v)} />
       </div>
 
       <div className="form-group">

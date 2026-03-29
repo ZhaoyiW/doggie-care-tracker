@@ -9,6 +9,7 @@ import CalendarPage from './pages/Calendar'
 import DayDetail from './pages/DayDetail'
 import Medical from './pages/Medical'
 import Trends from './pages/Trends'
+import VetManager from './pages/VetManager'
 import useStore from './store'
 
 function AppRoot() {
@@ -43,6 +44,7 @@ function AppRoot() {
           <Route path="calendar" element={<CalendarPage />} />
           <Route path="day/:date" element={<DayDetail />} />
           <Route path="medical" element={<Medical />} />
+          <Route path="vets" element={<VetManager />} />
           <Route path="trends" element={<Trends />} />
         </Route>
       </Routes>

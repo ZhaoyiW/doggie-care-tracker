@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import DatePicker from '../DatePicker'
 import useStore from '../../store'
 
 export default function DogProfileForm({ onClose }) {
@@ -94,7 +95,7 @@ export default function DogProfileForm({ onClose }) {
 
       <div className="form-group">
         <label className="form-label">生日</label>
-        <input type="date" className="form-input" value={form.birthDate} onChange={e => set('birthDate', e.target.value)} />
+        <DatePicker variant="input" value={form.birthDate} onChange={v => set('birthDate', v)} placeholder="选择生日" />
       </div>
 
       <div className="form-group">

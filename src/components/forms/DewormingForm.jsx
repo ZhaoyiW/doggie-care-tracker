@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { today } from '../../utils/dateUtils'
+import DatePicker from '../DatePicker'
 import useStore from '../../store'
 
 export default function DewormingForm({ initial, onClose }) {
@@ -39,22 +40,12 @@ export default function DewormingForm({ initial, onClose }) {
 
       <div className="form-group">
         <label className="form-label">用药日期</label>
-        <input
-          type="date"
-          className="form-input"
-          value={form.date}
-          onChange={e => setField('date', e.target.value)}
-        />
+        <DatePicker variant="input" value={form.date} onChange={v => setField('date', v)} />
       </div>
 
       <div className="form-group">
         <label className="form-label">下次到期日（可选）</label>
-        <input
-          type="date"
-          className="form-input"
-          value={form.nextDueDate}
-          onChange={e => setField('nextDueDate', e.target.value)}
-        />
+        <DatePicker variant="input" value={form.nextDueDate} onChange={v => setField('nextDueDate', v)} placeholder="选择到期日" />
       </div>
 
       <div className="form-group">

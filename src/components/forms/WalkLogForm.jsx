@@ -3,6 +3,7 @@ import { getCurrentHalfHour } from '../../constants'
 import { today } from '../../utils/dateUtils'
 import TimePicker from '../TimePicker'
 import PoopEventForm from './PoopEventForm'
+import DatePicker from '../DatePicker'
 import useStore from '../../store'
 import { POOP_STATUS_MAP } from '../../constants'
 
@@ -65,12 +66,7 @@ export default function WalkLogForm({ initial, date, onClose }) {
     <div>
       <div className="form-group">
         <label className="form-label">日期</label>
-        <input
-          type="date"
-          className="form-input"
-          value={form.date}
-          onChange={e => setField('date', e.target.value)}
-        />
+        <DatePicker variant="input" value={form.date} onChange={v => setField('date', v)} />
       </div>
 
       <TimePicker value={form.time} onChange={v => setField('time', v)} label="出发时间" />

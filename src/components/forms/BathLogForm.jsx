@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { today } from '../../utils/dateUtils'
 import Segmented from '../Segmented'
+import DatePicker from '../DatePicker'
 import useStore from '../../store'
 
 export default function BathLogForm({ initial, date, onClose }) {
@@ -29,12 +30,7 @@ export default function BathLogForm({ initial, date, onClose }) {
     <div>
       <div className="form-group">
         <label className="form-label">日期</label>
-        <input
-          type="date"
-          className="form-input"
-          value={form.date}
-          onChange={e => setField('date', e.target.value)}
-        />
+        <DatePicker variant="input" value={form.date} onChange={v => setField('date', v)} />
       </div>
 
       <div className="form-group">

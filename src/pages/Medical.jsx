@@ -1,16 +1,18 @@
 import { useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import useStore from '../store'
 import Modal from '../components/Modal'
 import VaccineForm from '../components/forms/VaccineForm'
 import VetVisitForm from '../components/forms/VetVisitForm'
 import HealthTestForm from '../components/forms/HealthTestForm'
 import DewormingForm from '../components/forms/DewormingForm'
+import AppointmentForm from '../components/forms/AppointmentForm'
 import { formatDate, today, daysBetween } from '../utils/dateUtils'
 import { HEALTH_TEST_TYPES } from '../constants'
 
 const TEST_TYPE_MAP = Object.fromEntries(HEALTH_TEST_TYPES.map(t => [t.value, t.label]))
 
-const TABS = ['💉 疫苗', '🏥 就医', '🧪 检查', '💊 驱虫']
+const TABS = ['💉 疫苗', '🏥 就医', '🧪 检查', '💊 驱虫', '📅 预约']
 
 function VaccineList({ records, onEdit, onDelete }) {
   const todayStr = today()
@@ -133,7 +135,61 @@ function DewormingList({ records, onEdit, onDelete }) {
     })
 }
 
+function AppointmentList({ records, vets, onEdit, onDelete }) {
+  const todayStr = today()
+  const vetMap = Object.fromEntries(vets.map(v => [v.id, v]))
+
+  if (records.length === 0) return (
+    <div className="empty-state"><div className="empty-emoji">📅</div><p>暂无预约，点击 + 添加</p></div>
+  )
+
+  const sorted = [...records].sort((a, b) => {
+    if (a.status === 'DONE' && b.status !== 'DONE') return 1
+    if (a.status !== 'DONE' && b.status === 'DONE') return -1
+    return a.date.localeCompare(b.date) || a.time.localeCompare(b.time)
+  })
+
+  return sorted.map(apt => {
+    const vet = apt.vetId ? vetMap[apt.vetId] : null
+    const days = daysBetween(todayStr, apt.date)
+    const isDone = apt.status === 'DONE'
+    const isOverdue = !isDone && days < 0
+
+    return (
+      <div key={apt.id} className="card" style={{ marginBottom: 10, opacity: isDone ? 0.6 : 1 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{ fontWeight: 700 }}>{apt.reason || '预约'}</span>
+              <span style={{
+                fontSize: 11, padding: '1px 6px', borderRadius: 4, fontWeight: 700,
+                background: isDone ? '#EAF0EA' : isOverdue ? '#F5E8E8' : '#EEF1F5',
+                color: isDone ? 'var(--green)' : isOverdue ? 'var(--red)' : 'var(--accent)',
+              }}>
+                {isDone ? '✅ 已完成' : isOverdue ? `逾期${-days}天` : days === 0 ? '今天' : `${days}天后`}
+              </span>
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>
+              {formatDate(apt.date)} {apt.time}
+              {vet && ` · ${vet.name}`}
+            </div>
+            {vet?.address && (
+              <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>📍 {vet.address}</div>
+            )}
+            {apt.notes && <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{apt.notes}</div>}
+          </div>
+          <div className="record-actions">
+            <button className="btn btn-icon" onClick={() => onEdit(apt)}>✏️</button>
+            <button className="btn btn-icon" style={{ color: 'var(--red)' }} onClick={() => onDelete(apt.id)}>🗑</button>
+          </div>
+        </div>
+      </div>
+    )
+  })
+}
+
 export default function Medical() {
+  const navigate = useNavigate()
   const [tab, setTab] = useState(0)
   const [modal, setModal] = useState(false)
   const [editing, setEditing] = useState(null)
@@ -142,10 +198,13 @@ export default function Medical() {
   const vetVisits = useStore(s => s.vetVisits)
   const healthTests = useStore(s => s.healthTests)
   const dewormingRecords = useStore(s => s.dewormingRecords || [])
+  const appointments = useStore(s => s.appointments || [])
+  const vets = useStore(s => s.vets || [])
   const deleteVaccineRecord = useStore(s => s.deleteVaccineRecord)
   const deleteVetVisit = useStore(s => s.deleteVetVisit)
   const deleteHealthTest = useStore(s => s.deleteHealthTest)
   const deleteDewormingRecord = useStore(s => s.deleteDewormingRecord)
+  const deleteAppointment = useStore(s => s.deleteAppointment)
 
   function openEdit(item) {
     setEditing(item)
@@ -167,11 +226,22 @@ export default function Medical() {
     editing ? '✏️ 编辑就医' : '🏥 添加就医',
     editing ? '✏️ 编辑检查' : '🧪 添加检查',
     editing ? '✏️ 编辑驱虫' : '💊 添加驱虫',
+    editing ? '✏️ 编辑预约' : '📅 添加预约',
   ][tab]
 
   return (
     <div className="page-content">
-      <h1 style={{ margin: '0 0 16px', fontSize: 22, fontWeight: 700 }}>医疗记录</h1>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>医疗记录</h1>
+        <button
+          className="btn btn-icon"
+          onClick={() => navigate('/vets')}
+          title="管理常用诊所"
+          style={{ fontSize: 18 }}
+        >
+          🏥
+        </button>
+      </div>
 
       <div className="tabs">
         {TABS.map((t, i) => (
@@ -183,6 +253,7 @@ export default function Medical() {
       {tab === 1 && <VetList records={vetVisits} onEdit={openEdit} onDelete={deleteVetVisit} />}
       {tab === 2 && <TestList records={healthTests} onEdit={openEdit} onDelete={deleteHealthTest} />}
       {tab === 3 && <DewormingList records={dewormingRecords} onEdit={openEdit} onDelete={deleteDewormingRecord} />}
+      {tab === 4 && <AppointmentList records={appointments} vets={vets} onEdit={openEdit} onDelete={deleteAppointment} />}
 
       <button className="fab" onClick={openAdd}>+</button>
 
@@ -191,6 +262,7 @@ export default function Medical() {
         {tab === 1 && <VetVisitForm initial={editing} onClose={closeModal} />}
         {tab === 2 && <HealthTestForm initial={editing} onClose={closeModal} />}
         {tab === 3 && <DewormingForm initial={editing} onClose={closeModal} />}
+        {tab === 4 && <AppointmentForm initial={editing} onClose={closeModal} />}
       </Modal>
     </div>
   )

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { today } from '../../utils/dateUtils'
+import DatePicker from '../DatePicker'
 import useStore from '../../store'
 
 export default function VaccineForm({ initial, onClose }) {
@@ -34,12 +35,12 @@ export default function VaccineForm({ initial, onClose }) {
 
       <div className="form-group">
         <label className="form-label">接种日期</label>
-        <input type="date" className="form-input" value={form.date} onChange={e => set('date', e.target.value)} />
+        <DatePicker variant="input" value={form.date} onChange={v => set('date', v)} />
       </div>
 
       <div className="form-group">
         <label className="form-label">下次到期日</label>
-        <input type="date" className="form-input" value={form.nextDueDate} onChange={e => set('nextDueDate', e.target.value)} />
+        <DatePicker variant="input" value={form.nextDueDate} onChange={v => set('nextDueDate', v)} placeholder="选择到期日" />
       </div>
 
       <div className="form-group">

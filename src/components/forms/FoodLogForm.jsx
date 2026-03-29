@@ -3,6 +3,7 @@ import { FOOD_TYPES, getCurrentHalfHour } from '../../constants'
 import { today } from '../../utils/dateUtils'
 import TimePicker from '../TimePicker'
 import Segmented from '../Segmented'
+import DatePicker from '../DatePicker'
 import useStore from '../../store'
 
 function initItems(initial) {
@@ -51,12 +52,7 @@ export default function FoodLogForm({ initial, date, onClose }) {
     <div>
       <div className="form-group">
         <label className="form-label">日期</label>
-        <input
-          type="date"
-          className="form-input"
-          value={form.date}
-          onChange={e => setField('date', e.target.value)}
-        />
+        <DatePicker variant="input" value={form.date} onChange={v => setField('date', v)} />
       </div>
 
       <TimePicker value={form.time} onChange={v => setField('time', v)} />
