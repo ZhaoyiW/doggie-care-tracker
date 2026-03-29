@@ -213,7 +213,7 @@ export default function Dashboard() {
           {upcomingAppointments.map(apt => (
             <div key={apt.id} style={{
               display: 'flex', alignItems: 'flex-start', gap: 10,
-              padding: '10px 0', borderBottom: '1px solid var(--border)',
+              padding: '6px 0',
             }}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
