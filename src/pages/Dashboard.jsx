@@ -175,8 +175,8 @@ export default function Dashboard() {
           { emoji: '💩', label: '排便', modal: 'poop' },
           { emoji: '📋', label: '日状态', modal: 'symptom' },
         ].map(item => (
-          <button key={item.modal} className="quick-add-btn" onClick={() => setModal(item.modal)}>
-            <span className="emoji">{item.emoji}</span>
+          <button key={item.modal} className="quick-add-btn" style={{ padding: '8px 8px' }} onClick={() => setModal(item.modal)}>
+            <span style={{ fontSize: 20 }}>{item.emoji}</span>
             <span>{item.label}</span>
           </button>
         ))}
