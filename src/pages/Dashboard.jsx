@@ -187,19 +187,15 @@ export default function Dashboard() {
         <p className="card-title">📊 今日概览</p>
         <div className="stat-row">
           <div className="stat-item">
-            <div className="stat-num">{todayFoodCount}</div>
-            <div className="stat-label">喂食次数</div>
+            <div style={{ fontSize: 14, color: 'var(--muted)' }}>喂食 <strong style={{ fontSize: 18, color: 'var(--text)' }}>{todayFoodCount}</strong> 次</div>
           </div>
           <div className="stat-item">
-            <div className="stat-num">{todayPoops.length}</div>
-            <div className="stat-label">排便次数</div>
+            <div style={{ fontSize: 14, color: 'var(--muted)' }}>排便 <strong style={{ fontSize: 18, color: 'var(--text)' }}>{todayPoops.length}</strong> 次</div>
           </div>
         </div>
         {todayPoops.length > 0 && (
-          <div style={{ marginTop: 8, padding: '6px 10px', borderRadius: 8, background: poopLabel.bg, display: 'inline-block' }}>
-            <span style={{ color: poopLabel.color, fontWeight: 600, fontSize: 12 }}>
-              今日排便：{poopLabel.label}
-            </span>
+          <div style={{ marginTop: 8, fontSize: 12, color: poopLabel.color, fontWeight: 600 }}>
+            今日排便：{poopLabel.label}
           </div>
         )}
         {todaySymptom && (
