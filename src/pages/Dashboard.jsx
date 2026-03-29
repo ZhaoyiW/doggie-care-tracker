@@ -209,6 +209,55 @@ export default function Dashboard() {
         )}
       </div>
 
+      {/* Upcoming appointments */}
+      {upcomingAppointments.length > 0 && (
+        <div className="card">
+          <p className="card-title">📅 近期预约</p>
+          {upcomingAppointments.map(apt => (
+            <div key={apt.id} style={{
+              display: 'flex', alignItems: 'flex-start', gap: 10,
+              padding: '10px 0', borderBottom: '1px solid var(--border)',
+            }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600 }}>{apt.reason || '预约'}</div>
+                <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
+                  {formatDate(apt.date)} {apt.time}
+                  {apt.vet && ` · ${apt.vet.name}`}
+                </div>
+                {apt.vet?.address && (
+                  <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>📍 {apt.vet.address}</div>
+                )}
+                {apt.vet?.address && (
+                  <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+                    <a
+                      href={`https://maps.apple.com/?address=${encodeURIComponent(apt.vet.address)}`}
+                      style={{ fontSize: 11, color: 'var(--accent)', textDecoration: 'none', padding: '3px 8px', background: 'var(--bg)', borderRadius: 6 }}
+                    >
+                      🍎 Apple Maps
+                    </a>
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(apt.vet.address)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ fontSize: 11, color: 'var(--accent)', textDecoration: 'none', padding: '3px 8px', background: 'var(--bg)', borderRadius: 6 }}
+                    >
+                      🗺 Google Maps
+                    </a>
+                  </div>
+                )}
+              </div>
+              <span style={{
+                fontSize: 12, fontWeight: 700, padding: '2px 8px', borderRadius: 6, flexShrink: 0,
+                background: apt.days === 0 ? '#F5EEE3' : '#EEF1F5',
+                color: apt.days === 0 ? 'var(--orange)' : 'var(--accent)',
+              }}>
+                {apt.days === 0 ? '今天' : `${apt.days}天后`}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Last poop */}
       {lastPoop && (
         <div className="card">
@@ -246,47 +295,6 @@ export default function Dashboard() {
       {/* Vaccine & deworming reminders */}
       <ReminderCard title="💉 疫苗提醒" items={vaccineReminders} />
       <ReminderCard title="💊 驱虫提醒" items={dewormingReminders} />
-
-      {/* Upcoming appointments */}
-      {upcomingAppointments.length > 0 && (
-        <div className="card">
-          <p className="card-title">📅 近期预约</p>
-          {upcomingAppointments.map(apt => (
-            <div key={apt.id} style={{
-              display: 'flex', alignItems: 'flex-start', gap: 10,
-              padding: '10px 0', borderBottom: '1px solid var(--border)',
-            }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600 }}>{apt.reason || '预约'}</div>
-                <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
-                  {formatDate(apt.date)} {apt.time}
-                  {apt.vet && ` · ${apt.vet.name}`}
-                </div>
-                {apt.vet?.address && (
-                  <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>📍 {apt.vet.address}</div>
-                )}
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
-                <span style={{
-                  fontSize: 12, fontWeight: 700, padding: '2px 8px', borderRadius: 6,
-                  background: apt.days === 0 ? '#F5EEE3' : '#EEF1F5',
-                  color: apt.days === 0 ? 'var(--orange)' : 'var(--accent)',
-                }}>
-                  {apt.days === 0 ? '今天' : `${apt.days}天后`}
-                </span>
-                {apt.vet?.address && (
-                  <a
-                    href={`https://maps.apple.com/?address=${encodeURIComponent(apt.vet.address)}`}
-                    style={{ fontSize: 11, color: 'var(--accent)', textDecoration: 'none' }}
-                  >
-                    导航 →
-                  </a>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
 
       {/* Last bath */}
       {lastBath && (
