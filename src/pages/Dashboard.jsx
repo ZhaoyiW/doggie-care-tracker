@@ -73,6 +73,7 @@ export default function Dashboard() {
   const vets = useStore(s => s.vets || [])
 
   const [modal, setModal] = useState(null)
+  const [poopExpanded, setPoopExpanded] = useState(false)
 
   const todayStr = today()
 
@@ -184,15 +185,9 @@ export default function Dashboard() {
       {/* Today summary */}
       <div className="card">
         <p className="card-title">📊 今日概览</p>
-        <div className="stat-row">
-          <div className="stat-item">
-            <div className="stat-num">{todayFoodCount}</div>
-            <div className="stat-label">喂食次数</div>
-          </div>
-          <div className="stat-item">
-            <div className="stat-num">{todayPoops.length}</div>
-            <div className="stat-label">排便次数</div>
-          </div>
+        <div style={{ display: 'flex', gap: 16, fontSize: 14, color: 'var(--muted)' }}>
+          <span>喂食 <strong style={{ fontSize: 17, color: 'var(--text)' }}>{todayFoodCount}</strong> 次</span>
+          <span>排便 <strong style={{ fontSize: 17, color: 'var(--text)' }}>{todayPoops.length}</strong> 次</span>
         </div>
         {todayPoops.length > 0 && (
           <div style={{ marginTop: 12, padding: '8px 12px', borderRadius: 10, background: poopLabel.bg }}>
@@ -259,38 +254,62 @@ export default function Dashboard() {
       )}
 
       {/* Last poop */}
-      {lastPoop && (
-        <div className="card">
-          <p className="card-title">💩 最近排便</p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 28 }}>{POOP_STATUS_MAP[lastPoop.status]?.emoji || '💩'}</span>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 600 }}>{POOP_STATUS_MAP[lastPoop.status]?.label}</div>
-              <div style={{ fontSize: 12, color: 'var(--muted)' }}>
-                {formatDate(lastPoop.date)} {lastPoop.time}
-                {lastPoop.hasMucus && ' · 有黏液'}
-                {lastPoop.hasBlood && ' · 有血'}
+      {lastPoop && (() => {
+        const status = POOP_STATUS_MAP[lastPoop.status]
+        const isAbnormal = ['LOOSE', 'CONSTIPATED'].includes(lastPoop.status) || lastPoop.hasBlood || lastPoop.hasMucus
+        const isMild = ['HARD', 'SOFT'].includes(lastPoop.status)
+        const isLate = hoursSinceLastPoop !== null && hoursSinceLastPoop >= 15
+        const cardBg = (isAbnormal || isLate) ? '#F5E8E8' : isMild ? '#F5EEE3' : '#EAF0EA'
+        const cardColor = (isAbnormal || isLate) ? 'var(--red)' : isMild ? 'var(--orange)' : 'var(--green)'
+        const icon = (isAbnormal || isLate) ? '⚠️' : isMild ? '🟡' : '✅'
+        return (
+          <div className="card" style={{ background: cardBg, cursor: 'pointer' }} onClick={() => setPoopExpanded(e => !e)}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 16 }}>{icon}</span>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: cardColor }}>最近排便</div>
+                  <div style={{ fontSize: 12, color: cardColor, opacity: 0.85 }}>
+                    {status?.label}
+                    {hoursSinceLastPoop !== null && ` · ${Math.floor(hoursSinceLastPoop)}h 前`}
+                  </div>
+                </div>
               </div>
+              <span style={{ fontSize: 12, color: cardColor, opacity: 0.7 }}>{poopExpanded ? '▲' : '▼'}</span>
             </div>
-            {hoursSinceLastPoop !== null && (
-              <div style={{
-                textAlign: 'center',
-                padding: '4px 10px',
-                borderRadius: 8,
-                background: hoursSinceLastPoop >= 15 ? '#F5E8E8' : 'var(--bg)',
-                color: hoursSinceLastPoop >= 15 ? 'var(--red)' : 'var(--muted)',
-                fontWeight: hoursSinceLastPoop >= 15 ? 700 : 400,
-              }}>
-                <div style={{ fontSize: 15 }}>{Math.floor(hoursSinceLastPoop)}h</div>
-                <div style={{ fontSize: 11 }}>{hoursSinceLastPoop >= 15 ? '⚠️ 注意' : '距今'}</div>
+
+            {poopExpanded && (
+              <div style={{ marginTop: 12 }} onClick={e => e.stopPropagation()}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontSize: 28 }}>{status?.emoji || '💩'}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600 }}>{status?.label}</div>
+                    <div style={{ fontSize: 12, color: 'var(--muted)' }}>
+                      {formatDate(lastPoop.date)} {lastPoop.time}
+                      {lastPoop.hasMucus && ' · 有黏液'}
+                      {lastPoop.hasBlood && ' · 有血'}
+                    </div>
+                  </div>
+                  {hoursSinceLastPoop !== null && (
+                    <div style={{
+                      textAlign: 'center', padding: '4px 10px', borderRadius: 8,
+                      background: isLate ? '#F5E8E8' : 'var(--bg)',
+                      color: isLate ? 'var(--red)' : 'var(--muted)',
+                      fontWeight: isLate ? 700 : 400,
+                    }}>
+                      <div style={{ fontSize: 15 }}>{Math.floor(hoursSinceLastPoop)}h</div>
+                      <div style={{ fontSize: 11 }}>{isLate ? '⚠️ 注意' : '距今'}</div>
+                    </div>
+                  )}
+                </div>
+                <div style={{ marginTop: 10, fontSize: 13, color: 'var(--muted)' }}>
+                  近30天拉稀 <strong style={{ color: last30DaysLoose > 3 ? 'var(--red)' : 'var(--text)' }}>{last30DaysLoose}</strong> 次
+                </div>
               </div>
             )}
           </div>
-          <div style={{ marginTop: 10, fontSize: 13, color: 'var(--muted)' }}>
-            近30天拉稀 <strong style={{ color: last30DaysLoose > 3 ? 'var(--red)' : 'var(--text)' }}>{last30DaysLoose}</strong> 次
-          </div>
-        </div>
-      )}
+        )
+      })()}
 
       {/* Vaccine & deworming reminders */}
       <ReminderCard title="💉 疫苗提醒" items={vaccineReminders} />
