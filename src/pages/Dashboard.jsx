@@ -190,8 +190,8 @@ export default function Dashboard() {
           <span>排便 <strong style={{ fontSize: 17, color: 'var(--text)' }}>{todayPoops.length}</strong> 次</span>
         </div>
         {todayPoops.length > 0 && (
-          <div style={{ marginTop: 12, padding: '8px 12px', borderRadius: 10, background: poopLabel.bg }}>
-            <span style={{ color: poopLabel.color, fontWeight: 700 }}>
+          <div style={{ marginTop: 8, padding: '6px 10px', borderRadius: 8, background: poopLabel.bg, display: 'inline-block' }}>
+            <span style={{ color: poopLabel.color, fontWeight: 600, fontSize: 12 }}>
               今日排便：{poopLabel.label}
             </span>
           </div>
