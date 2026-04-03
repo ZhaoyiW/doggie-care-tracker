@@ -70,18 +70,16 @@ async function upsert(table, record) {
 }
 
 async function update(table, id, patch) {
+  const record = { id, ...patch }
   if (IS_CLOUD) {
-    const r = await pool.query(`SELECT data FROM ${table} WHERE id = $1`, [id])
-    if (!r.rows.length) return null
-    const updated = { ...r.rows[0].data, ...patch }
-    await pool.query(`UPDATE ${table} SET data = $1 WHERE id = $2`, [updated, id])
-    return updated
+    await pool.query(
+      `INSERT INTO ${table} VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data`,
+      [id, record]
+    )
+  } else {
+    sqliteDb.prepare(`INSERT OR REPLACE INTO ${table} VALUES (?, ?)`).run(id, JSON.stringify(record))
   }
-  const row = sqliteDb.prepare(`SELECT data FROM ${table} WHERE id = ?`).get(id)
-  if (!row) return null
-  const updated = { ...JSON.parse(row.data), ...patch }
-  sqliteDb.prepare(`UPDATE ${table} SET data = ? WHERE id = ?`).run(JSON.stringify(updated), id)
-  return updated
+  return record
 }
 
 async function del(table, id) {

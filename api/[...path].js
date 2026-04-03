@@ -35,11 +35,12 @@ async function upsert(table, record) {
   )
 }
 async function update(table, id, patch) {
-  const r = await pool.query(`SELECT data FROM ${table} WHERE id = $1`, [id])
-  if (!r.rows.length) return null
-  const updated = { ...r.rows[0].data, ...patch }
-  await pool.query(`UPDATE ${table} SET data = $1 WHERE id = $2`, [updated, id])
-  return updated
+  const record = { id, ...patch }
+  await pool.query(
+    `INSERT INTO ${table} VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data`,
+    [id, record]
+  )
+  return record
 }
 async function del(table, id) {
   await pool.query(`DELETE FROM ${table} WHERE id = $1`, [id])
