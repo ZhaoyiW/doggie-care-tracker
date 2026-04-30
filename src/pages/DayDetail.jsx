@@ -107,7 +107,7 @@ export default function DayDetail() {
               ['食欲', APPETITE_MAP[daySymptom.appetite]],
               ['饮水', WATER_MAP[daySymptom.water]],
               ['呕吐', daySymptom.vomiting === 'YES' ? '⚠️ 有' : '无'],
-              daySymptom.weight && ['体重', `${daySymptom.weight}lb`],
+              daySymptom.weight && ['体重', `${daySymptom.weight}kg`],
             ].filter(Boolean).map(([label, val]) => (
               <div key={label} style={{ background: 'var(--bg)', borderRadius: 8, padding: '8px 12px' }}>
                 <div style={{ fontSize: 11, color: 'var(--muted)' }}>{label}</div>

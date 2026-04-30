@@ -106,33 +106,34 @@ function TestList({ records, onEdit, onDelete }) {
 function DewormingList({ records, onEdit, onDelete }) {
   const todayStr = today()
   if (records.length === 0) return <div className="empty-state"><div className="empty-emoji">💊</div><p>暂无驱虫记录</p></div>
-  return records
-    .sort((a, b) => b.date.localeCompare(a.date))
-    .map(r => {
-      const days = r.nextDueDate ? daysBetween(todayStr, r.nextDueDate) : null
-      const cls = days === null ? 'ok' : days < 0 ? 'overdue' : days <= 30 ? 'soon' : 'ok'
-      return (
-        <div key={r.id} className="record-item">
-          <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 600 }}>{r.name}</div>
-            <div className="record-meta">
-              用药：{formatDate(r.date)}
-              {r.nextDueDate && ` · 下次：${formatDate(r.nextDueDate)}`}
-              {days !== null && (
-                <span style={{ marginLeft: 6, color: cls === 'overdue' ? 'var(--red)' : cls === 'soon' ? 'var(--orange)' : 'var(--green)', fontWeight: 600, fontSize: 11 }}>
-                  {days < 0 ? `过期${-days}天` : days === 0 ? '今天到期' : `${days}天后`}
-                </span>
-              )}
-            </div>
-            {r.notes && <div style={{ fontSize: 12, color: 'var(--muted)' }}>{r.notes}</div>}
+  const sorted = [...records].sort((a, b) => b.date.localeCompare(a.date))
+  const latestId = sorted[0]?.id
+  return sorted.map(r => {
+    const isLatest = r.id === latestId
+    const days = isLatest && r.nextDueDate ? daysBetween(todayStr, r.nextDueDate) : null
+    const cls = days === null ? 'ok' : days < 0 ? 'overdue' : days <= 30 ? 'soon' : 'ok'
+    return (
+      <div key={r.id} className="record-item">
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: 600 }}>{r.name}</div>
+          <div className="record-meta">
+            用药：{formatDate(r.date)}
+            {r.nextDueDate && ` · 下次：${formatDate(r.nextDueDate)}`}
+            {days !== null && (
+              <span style={{ marginLeft: 6, color: cls === 'overdue' ? 'var(--red)' : cls === 'soon' ? 'var(--orange)' : 'var(--green)', fontWeight: 600, fontSize: 11 }}>
+                {days < 0 ? `过期${-days}天` : days === 0 ? '今天到期' : `${days}天后`}
+              </span>
+            )}
           </div>
-          <div className="record-actions">
-            <button className="btn btn-icon" onClick={() => onEdit(r)}>✏️</button>
-            <button className="btn btn-icon" style={{ color: 'var(--red)' }} onClick={() => onDelete(r.id)}>🗑</button>
-          </div>
+          {r.notes && <div style={{ fontSize: 12, color: 'var(--muted)' }}>{r.notes}</div>}
         </div>
-      )
-    })
+        <div className="record-actions">
+          <button className="btn btn-icon" onClick={() => onEdit(r)}>✏️</button>
+          <button className="btn btn-icon" style={{ color: 'var(--red)' }} onClick={() => onDelete(r.id)}>🗑</button>
+        </div>
+      </div>
+    )
+  })
 }
 
 function AppointmentList({ records, vets, onEdit, onDelete }) {
