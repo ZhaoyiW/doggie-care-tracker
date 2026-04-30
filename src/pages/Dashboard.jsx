@@ -129,13 +129,12 @@ export default function Dashboard() {
       .sort((a, b) => a.days - b.days),
     [vaccineRecords, todayStr])
 
-  const dewormingReminders = useMemo(() =>
-    dewormingRecords
-      .filter(r => r.nextDueDate)
-      .map(r => ({ ...r, days: daysBetween(todayStr, r.nextDueDate) }))
-      .filter(r => r.days <= 5)
-      .sort((a, b) => a.days - b.days),
-    [dewormingRecords, todayStr])
+  const dewormingReminders = useMemo(() => {
+    const latest = [...dewormingRecords].sort((a, b) => b.date.localeCompare(a.date))[0]
+    if (!latest?.nextDueDate) return []
+    const days = daysBetween(todayStr, latest.nextDueDate)
+    return days <= 5 ? [{ ...latest, days }] : []
+  }, [dewormingRecords, todayStr])
 
   const upcomingAppointments = useMemo(() => {
     const vetMap = Object.fromEntries(vets.map(v => [v.id, v]))
