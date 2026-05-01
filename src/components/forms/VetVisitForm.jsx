@@ -7,6 +7,7 @@ import useStore from '../../store'
 export default function VetVisitForm({ initial, onClose }) {
   const addVetVisit = useStore(s => s.addVetVisit)
   const updateVetVisit = useStore(s => s.updateVetVisit)
+  const vets = useStore(s => s.vets || [])
   const isEdit = !!initial
 
   const [form, setForm] = useState({
@@ -33,7 +34,6 @@ export default function VetVisitForm({ initial, onClose }) {
   }
 
   const fields = [
-    { key: 'hospital', label: '医院 / 诊所', placeholder: '医院名称' },
     { key: 'doctor', label: '医生', placeholder: '医生姓名（可选）' },
     { key: 'reason', label: '就诊原因', placeholder: '例：拉稀、食欲不振' },
     { key: 'diagnosis', label: '诊断结果', placeholder: '医生诊断' },
@@ -47,6 +47,20 @@ export default function VetVisitForm({ initial, onClose }) {
       <div className="form-group">
         <label className="form-label">就诊日期</label>
         <DatePicker variant="input" value={form.date} onChange={v => set('date', v)} />
+      </div>
+
+      <div className="form-group">
+        <label className="form-label">医院 / 诊所</label>
+        {vets.length > 0 ? (
+          <select className="form-input" value={form.hospital} onChange={e => set('hospital', e.target.value)}>
+            <option value="">请选择诊所</option>
+            {vets.map(v => <option key={v.id} value={v.name}>{v.name}</option>)}
+            <option value="__custom__">其他（手动输入）</option>
+          </select>
+        ) : null}
+        {(vets.length === 0 || form.hospital === '__custom__' || (form.hospital && !vets.some(v => v.name === form.hospital))) && (
+          <input type="text" className="form-input" style={vets.length > 0 ? { marginTop: 8 } : {}} placeholder="医院名称" value={form.hospital === '__custom__' ? '' : form.hospital} onChange={e => set('hospital', e.target.value)} />
+        )}
       </div>
 
       {fields.map(({ key, label, placeholder }) => (

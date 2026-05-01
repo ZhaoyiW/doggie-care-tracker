@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useStore from '../store'
-import { getDaysInMonth, getMonthStartWeekday, dateToDayStr, formatMonthYear, nextMonth, prevMonth, isDateToday } from '../utils/dateUtils'
-import { computePoopLabel, getPoopEventsForDate } from '../utils/poopLabelEngine'
+import { getDaysInMonth, getMonthStartWeekday, dateToDayStr, formatMonthYear, nextMonth, prevMonth, isDateToday, today } from '../utils/dateUtils'
+import { computePoopLabelForDay } from '../utils/poopLabelEngine'
 import { LABEL_COLORS } from '../constants'
 
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']
@@ -10,6 +10,7 @@ const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']
 export default function CalendarPage() {
   const navigate = useNavigate()
   const poopLogs = useStore(s => s.poopLogs || [])
+  const foodLogs = useStore(s => s.foodLogs || [])
   const bathLogs = useStore(s => s.bathLogs || [])
   const dewormingRecords = useStore(s => s.dewormingRecords || [])
   const appointments = useStore(s => s.appointments || [])
@@ -17,6 +18,12 @@ export default function CalendarPage() {
 
   const days = useMemo(() => getDaysInMonth(currentMonth), [currentMonth])
   const startWeekday = useMemo(() => getMonthStartWeekday(currentMonth), [currentMonth])
+  const todayStr = today()
+
+  const firstDataDate = useMemo(() => {
+    const dates = [...poopLogs, ...foodLogs].map(r => r.date).filter(Boolean)
+    return dates.length ? dates.reduce((a, b) => a < b ? a : b) : null
+  }, [poopLogs, foodLogs])
 
   const labelMap = useMemo(() => {
     const map = {}
@@ -25,16 +32,15 @@ export default function CalendarPage() {
     const appointmentDates = new Set(appointments.map(a => a.date))
     days.forEach(day => {
       const dateStr = dateToDayStr(day)
-      const events = getPoopEventsForDate(poopLogs, dateStr)
       map[dateStr] = {
-        poop: computePoopLabel(events),
+        poop: computePoopLabelForDay(poopLogs, dateStr, firstDataDate, todayStr),
         hasBath: bathDates.has(dateStr),
         hasDeworming: dewormDates.has(dateStr),
         hasAppointment: appointmentDates.has(dateStr),
       }
     })
     return map
-  }, [days, poopLogs, bathLogs, dewormingRecords, appointments])
+  }, [days, poopLogs, foodLogs, bathLogs, dewormingRecords, appointments, firstDataDate, todayStr])
 
   return (
     <div className="page-content">

@@ -25,3 +25,15 @@ export function computePoopLabel(poopEvents) {
 export function getPoopEventsForDate(poopLogs, dateStr) {
   return (poopLogs || []).filter(p => p.date === dateStr)
 }
+
+/**
+ * Compute poop label for a date, treating past days with no records as CONSTIPATED
+ * if they fall on or after the earliest data date.
+ */
+export function computePoopLabelForDay(poopLogs, dateStr, firstDataDate, todayStr) {
+  const events = getPoopEventsForDate(poopLogs, dateStr)
+  if (events.length === 0 && firstDataDate && dateStr >= firstDataDate && dateStr < todayStr) {
+    return { key: 'CONSTIPATED', ...LABEL_COLORS.CONSTIPATED }
+  }
+  return computePoopLabel(events)
+}

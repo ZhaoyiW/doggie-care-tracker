@@ -1,9 +1,9 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useMemo } from 'react'
 import useStore from '../store'
-import { formatDateFull } from '../utils/dateUtils'
+import { formatDateFull, today } from '../utils/dateUtils'
 import { POOP_STATUS_MAP, FOOD_TYPES } from '../constants'
-import { computePoopLabel, getPoopEventsForDate } from '../utils/poopLabelEngine'
+import { computePoopLabelForDay, getPoopEventsForDate } from '../utils/poopLabelEngine'
 
 const FOOD_TYPE_MAP = Object.fromEntries(FOOD_TYPES.map(f => [f.value, f.label]))
 const SPIRIT_MAP = { NORMAL: '正常', SLIGHTLY_LOW: '稍差', VERY_LOW: '很差' }
@@ -13,7 +13,7 @@ const WATER_MAP = { NORMAL: '正常', MORE: '偏多', LESS: '偏少' }
 export default function DayDetail() {
   const { date } = useParams()
   const navigate = useNavigate()
-  const foodLogs = useStore(s => s.foodLogs)
+  const foodLogs = useStore(s => s.foodLogs || [])
   const poopLogs = useStore(s => s.poopLogs || [])
   const symptomLogs = useStore(s => s.symptomLogs)
   const appointments = useStore(s => s.appointments || [])
@@ -30,7 +30,15 @@ export default function DayDetail() {
   const daySymptom = useMemo(() =>
     symptomLogs.find(s => s.date === date), [symptomLogs, date])
 
-  const poopLabel = useMemo(() => computePoopLabel(dayPoops), [dayPoops])
+  const firstDataDate = useMemo(() => {
+    const dates = [...poopLogs, ...foodLogs].map(r => r.date).filter(Boolean)
+    return dates.length ? dates.reduce((a, b) => a < b ? a : b) : null
+  }, [poopLogs, foodLogs])
+
+  const poopLabel = useMemo(
+    () => computePoopLabelForDay(poopLogs, date, firstDataDate, today()),
+    [dayPoops, firstDataDate, date]
+  )
 
   const dayAppointments = useMemo(() => {
     const vetMap = Object.fromEntries(vets.map(v => [v.id, v]))
@@ -54,7 +62,9 @@ export default function DayDetail() {
             <span style={{ fontSize: 24 }}>💩</span>
             <div>
               <span style={{ fontWeight: 700, color: poopLabel.color, fontSize: 16 }}>{poopLabel.label}</span>
-              <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>共 {dayPoops.length} 次排便</div>
+              <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
+                {dayPoops.length > 0 ? `共 ${dayPoops.length} 次排便` : '当日无排便记录'}
+              </div>
             </div>
           </div>
         </div>

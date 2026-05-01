@@ -6,6 +6,7 @@ import useStore from '../../store'
 export default function VaccineForm({ initial, onClose }) {
   const addVaccineRecord = useStore(s => s.addVaccineRecord)
   const updateVaccineRecord = useStore(s => s.updateVaccineRecord)
+  const vets = useStore(s => s.vets || [])
   const isEdit = !!initial
 
   const [form, setForm] = useState({
@@ -44,8 +45,17 @@ export default function VaccineForm({ initial, onClose }) {
       </div>
 
       <div className="form-group">
-        <label className="form-label">医院</label>
-        <input type="text" className="form-input" placeholder="医院名称" value={form.hospital} onChange={e => set('hospital', e.target.value)} />
+        <label className="form-label">接种医院</label>
+        {vets.length > 0 ? (
+          <select className="form-input" value={form.hospital} onChange={e => set('hospital', e.target.value)}>
+            <option value="">请选择诊所</option>
+            {vets.map(v => <option key={v.id} value={v.name}>{v.name}</option>)}
+            <option value="__custom__">其他（手动输入）</option>
+          </select>
+        ) : null}
+        {(vets.length === 0 || form.hospital === '__custom__' || (form.hospital && !vets.some(v => v.name === form.hospital))) && (
+          <input type="text" className="form-input" style={vets.length > 0 ? { marginTop: 8 } : {}} placeholder="医院名称" value={form.hospital === '__custom__' ? '' : form.hospital} onChange={e => set('hospital', e.target.value)} />
+        )}
       </div>
 
       <div className="form-group">

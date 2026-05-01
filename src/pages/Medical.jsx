@@ -145,16 +145,17 @@ function AppointmentList({ records, vets, onEdit, onDelete }) {
   )
 
   const sorted = [...records].sort((a, b) => {
-    if (a.status === 'DONE' && b.status !== 'DONE') return 1
-    if (a.status !== 'DONE' && b.status === 'DONE') return -1
-    return a.date.localeCompare(b.date) || a.time.localeCompare(b.time)
+    const aDone = a.status === 'DONE' || a.date < todayStr
+    const bDone = b.status === 'DONE' || b.date < todayStr
+    if (aDone && !bDone) return 1
+    if (!aDone && bDone) return -1
+    return a.date.localeCompare(b.date) || (a.time || '').localeCompare(b.time || '')
   })
 
   return sorted.map(apt => {
     const vet = apt.vetId ? vetMap[apt.vetId] : null
     const days = daysBetween(todayStr, apt.date)
-    const isDone = apt.status === 'DONE'
-    const isOverdue = !isDone && days < 0
+    const isDone = apt.status === 'DONE' || days < 0
 
     return (
       <div key={apt.id} className="card" style={{ marginBottom: 10, opacity: isDone ? 0.6 : 1 }}>
@@ -164,10 +165,10 @@ function AppointmentList({ records, vets, onEdit, onDelete }) {
               <span style={{ fontWeight: 700 }}>{apt.reason || '预约'}</span>
               <span style={{
                 fontSize: 11, padding: '1px 6px', borderRadius: 4, fontWeight: 700,
-                background: isDone ? '#EAF0EA' : isOverdue ? '#F5E8E8' : '#EEF1F5',
-                color: isDone ? 'var(--green)' : isOverdue ? 'var(--red)' : 'var(--accent)',
+                background: isDone ? '#EAF0EA' : '#EEF1F5',
+                color: isDone ? 'var(--green)' : 'var(--accent)',
               }}>
-                {isDone ? '✅ 已完成' : isOverdue ? `逾期${-days}天` : days === 0 ? '今天' : `${days}天后`}
+                {isDone ? '✅ 已完成' : days === 0 ? '今天' : `${days}天后`}
               </span>
             </div>
             <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>
