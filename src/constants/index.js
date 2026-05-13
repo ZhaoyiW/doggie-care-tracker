@@ -5,11 +5,14 @@ export const TIME_SLOTS = Array.from({ length: 96 }, (_, i) => {
   return `${String(h).padStart(2, '0')}:${m}`
 })
 
-// Get current time rounded down to nearest 15 minutes
+// Get current time rounded to nearest 15-minute slot
 export function getCurrentHalfHour() {
   const now = new Date()
-  const m = String(Math.floor(now.getMinutes() / 15) * 15).padStart(2, '0')
-  return `${String(now.getHours()).padStart(2, '0')}:${m}`
+  const totalMinutes = now.getHours() * 60 + now.getMinutes()
+  const rounded = Math.round(totalMinutes / 15) * 15
+  const h = Math.floor(rounded / 60) % 24
+  const m = rounded % 60
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
 }
 
 // Food types
