@@ -6,24 +6,31 @@ import Segmented from '../Segmented'
 import DatePicker from '../DatePicker'
 import useStore from '../../store'
 
-function initItems(initial) {
+function initItems(initial, lastLog) {
   if (initial?.items) return initial.items
   if (initial?.foodType) return [{ type: initial.foodType, content: initial.content || '', amount: initial.amount || '' }]
+  if (lastLog?.items) return lastLog.items.map(it => ({ ...it }))
+  if (lastLog?.foodType) return [{ type: lastLog.foodType, content: lastLog.content || '', amount: lastLog.amount || '' }]
   return [{ type: 'PRESCRIPTION', content: '', amount: '' }]
 }
 
 export default function FoodLogForm({ initial, date, onClose }) {
   const addFoodLog = useStore(s => s.addFoodLog)
   const updateFoodLog = useStore(s => s.updateFoodLog)
+  const foodLogs = useStore(s => s.foodLogs || [])
   const isEdit = !!initial
+
+  const lastLog = !isEdit && foodLogs.length > 0
+    ? [...foodLogs].sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time))[0]
+    : null
 
   const [form, setForm] = useState({
     date: initial?.date ?? date ?? today(),
     time: initial?.time ?? getCurrentHalfHour(),
-    finished: initial?.finished ?? true,
+    finished: initial?.finished ?? lastLog?.finished ?? true,
     notes: initial?.notes ?? '',
   })
-  const [items, setItems] = useState(() => initItems(initial))
+  const [items, setItems] = useState(() => initItems(initial, lastLog))
 
   function setField(key, val) {
     setForm(f => ({ ...f, [key]: val }))
